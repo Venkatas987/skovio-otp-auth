@@ -40,6 +40,10 @@ async function sendViaBrevo(toEmail, fullName, subject, html, text, fromName, fr
           name: fullName || 'User',
         },
       ],
+      replyTo: {
+        name: fromName,
+        email: fromEmail,
+      },
       subject,
       htmlContent: html,
       textContent: text,
@@ -48,10 +52,13 @@ async function sendViaBrevo(toEmail, fullName, subject, html, text, fromName, fr
 
   if (!response.ok) {
     const errorBody = await response.text();
+    console.error(`[mailer] Brevo API rejected request. Status: ${response.status}, error: ${errorBody}`);
     throw new Error(`Brevo API error (${response.status}): ${errorBody}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log(`[mailer] Brevo API accepted email. Status: ${response.status}, messageId: ${data?.messageId || 'unknown'}`);
+  return data;
 }
 
 async function sendOtpEmail(toEmail, fullName, otp) {
@@ -73,7 +80,7 @@ async function sendOtpEmail(toEmail, fullName, otp) {
   const subject = 'Your verification code';
 
   if (brevoApiKey) {
-    console.log('[mailer] Sending OTP email via Brevo HTTPS API');
+    console.log(`[mailer] Sending OTP email via Brevo HTTPS API (sender: ${fromEmail})`);
     await sendViaBrevo(toEmail, fullName, subject, html, text, fromName, fromEmail, brevoApiKey);
   } else {
     console.warn('[mailer] BREVO_API_KEY not detected, falling back to SMTP transporter');
