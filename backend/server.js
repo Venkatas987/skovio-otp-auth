@@ -5,6 +5,11 @@ const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
+// Trust the first proxy hop (required for express-rate-limit behind Railway / any reverse proxy).
+// Without this, express-rate-limit throws ERR_ERL_UNEXPECTED_X_FORWARDED_FOR in production.
+// Value '1' means trust exactly one proxy level — safe for Railway's infrastructure.
+app.set('trust proxy', 1);
+
 app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
 app.use(express.json());
 
